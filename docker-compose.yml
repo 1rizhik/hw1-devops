@@ -1,0 +1,22 @@
+services:
+  banknote-api:
+    build: .
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  test-runner:
+    build: .
+    command: pytest tests/test_functional.py -v
+    depends_on:
+      - banknote-api
+    environment:
+      SERVICE_URL: http://banknote-api:8000
+    volumes:
+      - ./tests:/app/tests
+    profiles:
+      - testing

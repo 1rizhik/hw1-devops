@@ -1,0 +1,43 @@
+{
+    "scenarios": [
+        {
+            "name": "health_check",
+            "method": "GET",
+            "endpoint": "/health",
+            "expected_status": 200,
+            "expected_fields": [
+                "status",
+                "model_loaded"
+            ]
+        },
+        {
+            "name": "predict_genuine",
+            "method": "POST",
+            "endpoint": "/predict",
+            "body": {
+                "variance": 0.5,
+                "skewness": 1.0,
+                "curtosis": 0.8,
+                "entropy": -0.2
+            },
+            "expected_status": 200,
+            "expected_fields": [
+                "is_fake",
+                "class_name"
+            ]
+        },
+        {
+            "name": "predict_fake",
+            "method": "POST",
+            "endpoint": "/predict",
+            "body": {
+                "variance": 3.6,
+                "skewness": 4.5,
+                "curtosis": 1.2,
+                "entropy": -2.1
+            },
+            "expected_status": 200,
+            "expected_is_fake": 1
+        }
+    ]
+}

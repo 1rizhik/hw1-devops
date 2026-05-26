@@ -1,0 +1,51 @@
+name: CD - Functional Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+  push:
+    branches: [main]
+
+jobs:
+  functional-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull Docker image
+        run: docker pull rizhikaliya/banknote-api:latest
+
+      - name: Run container
+        run: |
+          docker run -d --name banknote-test -p 8000:8000 rizhikaliya/banknote-api:latest
+          sleep 10
+
+      - name: Install test dependencies
+        run: pip install pytest requests
+
+      - name: Run functional tests
+        run: pytest tests/test_functional.py -v
+
+      - name: Run scenario tests
+        run: |
+          python -c "
+import json, requests
+with open('scenario.json') as f:
+    scenarios = json.load(f)['scenarios']
+for s in scenarios:
+    url = f'http://localhost:8000{s[\"endpoint\"]}'
+    if s['method'] == 'GET':
+        resp = requests.get(url)
+    else:
+        resp = requests.post(url, json=s.get('body', {}))
+    assert resp.status_code == s['expected_status']
+    print(f'✅ {s[\"name\"]} passed')
+          "
+
+      - name: Stop container
+        if: always()
+        run: |
+          docker stop banknote-test || true
+          docker rm banknote-test || true
